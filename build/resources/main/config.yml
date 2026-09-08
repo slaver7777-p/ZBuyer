@@ -1,0 +1,19 @@
+sorting:
+  - expensive
+  - cheaper
+
+multiplier:
+  start-multiplier: 1.0
+  points-per-level: 2500.0
+  increase-per-level: 0.01
+  max-multiplier: 3.0
+
+commands:
+  buyer_menu: "dbuyer:home"
+  setting_menu: "dbuyer:settings"
+  aliases:
+    - "b"
+    - "баер"
+  commands_renamer:
+    buyer: "buyer" #seller
+    settings: "settings" #setting

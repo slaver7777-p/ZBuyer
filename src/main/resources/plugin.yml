@@ -1,0 +1,12 @@
+name: DBuyer
+version: '${version}'
+
+main: dev.slava7777.buyer.DBuyer
+api-version: '1.21.11'
+load: POSTWORLD
+
+depend:
+  - BLib
+  - BMenu
+
+authors: [ slava7777 ]

@@ -1,0 +1,5 @@
+$lang: ru_RU
+
+sell_items: "&f Вы успешно продали предметов {count} шт. за {total_money} монет и {total_points} очков. Ваш множитель: {multiplier}"
+auto_sold: "&f Успешно продано предметов {count} шт. за {total_money}"
+no_items: "&f Нет предметов для продажи"

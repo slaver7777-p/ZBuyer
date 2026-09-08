@@ -1,0 +1,60 @@
+id: "dbuyer:home"
+provider: "dbuyer:home"
+type: "CHEST"
+size: 54
+title: "&0Скупщик"
+
+slots: "0-44"
+
+tick_update: 20
+
+items:
+  decorate:
+    material: "yellow_stained_glass_pane"
+    name: "&f "
+    slot: "46-48, 50-52"
+
+  info:
+    material: "bell"
+    name: " <gradient:#F09802:#D34905>🔥 Ваша статистика</gradient>"
+    slot: "45"
+    lore:
+      - "&f "
+      - " <#C8C5C3>Ваш множитель:<#C8C5C3> <#EFCF13>x{multiplier}<#EFCF13>"
+      - " <#C8C5C3>Очки скупщика:<#C8C5C3> <#EFCF13>{user_points}<#EFCF13>"
+      - "&f "
+
+  sell_item:
+    material: "yellow_dye"
+    name: "&f "
+    slot: "49"
+    tick_speed: 10
+    on_tick: '[update]'
+    lore:
+      - "&f <#EFCF13>▶<#EFCF13> <#C8C5C3>Нажмите, чтобы сдать предметы.<#C8C5C3>"
+      - "&f "
+      - "&f    <#C8C5C3>За сдачу вы получите<#C8C5C3> <#EFCF13>{money_price}<#EFCF13> <#C8C5C3>монет<#C8C5C3>"
+      - "&f    <#C8C5C3>и<#C8C5C3> <#EFCF13>{points_price}<#EFCF13> <#C8C5C3>очков скупщика<#C8C5C3>"
+      - "&f "
+      - "&f    <#EFCF13>⏺<#EFCF13> <#C8C5C3>Ваш множитель:<#C8C5C3> <#EFCF13>x{multiplier}<#EFCF13>"
+      - "&f "
+    on_click:
+      commands:
+        - "[sell_items]"
+
+  setting_item:
+    material: "honeycomb"
+    name: " <gradient:#F09802:#D34905>🔔 Настройки скупщика</gradient>"
+    slot: "53"
+    lore:
+      - "&f "
+      - "&f <#C8C5C3>Здесь вы сможете: настроить автопродажу,<#C8C5C3>"
+      - "&e <#C8C5C3>выбрать предметы для автопродажи"
+      - "&f "
+      - "&f <#EFCF13>▶<#EFCF13> <gradient:#C8C5C3:#C8C5C3>Нажмите, чтобы открыть раздел</gradient>"
+      - "&f "
+    on_click:
+      commands:
+        - "[return_items]"
+        - "[open] dbuyer:settings"
+

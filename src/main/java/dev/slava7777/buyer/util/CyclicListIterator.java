@@ -1,0 +1,45 @@
+package dev.slava7777.buyer.util;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+
+public final class CyclicListIterator<E> {
+    private final List<E> list;
+    private int current = 0;
+
+    public CyclicListIterator(List<E> list) {
+        this.list = Objects.requireNonNull(list);
+        if (list.isEmpty()) {
+            throw new IllegalArgumentException("List cannot be empty");
+        }
+    }
+    public boolean setPosOf(E v){
+        int i = list.indexOf(v);
+        if (i == -1) return false;
+        current = i;
+        return true;
+    }
+
+    public E next() {
+        current = (current + 1) % list.size();
+        return list.get(current);
+    }
+
+    public E previous() {
+        current = (current - 1 + list.size()) % list.size();
+        return list.get(current);
+    }
+
+    public E current() {
+        return list.get(current);
+    }
+
+    public int pos() {
+        return current;
+    }
+
+    public List<E> list() {
+        return Collections.unmodifiableList(list);
+    }
+}
