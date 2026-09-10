@@ -18,7 +18,7 @@ dependencies {
         exclude(group = "org.bukkit")
     }
 
-    compileOnly(files("libs/BMenu-2.6.jar"))
+    compileOnly("dev.by1337.bmenu:BMenu:2.6")
     compileOnly("dev.by1337.edsl:EventDSL:1.5.2")
     compileOnly("dev.by1337.yaml:common:1.6")
     compileOnly("dev.by1337.core:BLibV2:1.7.8")

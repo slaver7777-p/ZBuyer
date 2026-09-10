@@ -5,8 +5,11 @@ import dev.by1337.bmenu.factory.MenuCodecs;
 import dev.by1337.bmenu.loader.MenuConfig;
 import dev.by1337.bmenu.menu.AbstractMenu;
 import dev.by1337.bmenu.menu.Menu;
+import dev.by1337.bmenu.slot.SlotContent;
+import dev.by1337.bmenu.slot.impl.SimpleSlotContent;
 import dev.by1337.cmd.Command;
 import dev.by1337.edsl.context.EventContext;
+import dev.by1337.item.ItemModel;
 import dev.by1337.plc.PlaceholderResolver;
 import dev.by1337.plc.Placeholders;
 import dev.by1337.yaml.codec.PipelineYamlCodecBuilder;
@@ -17,6 +20,8 @@ import dev.slava7777.buyer.db.BuyerUser;
 import dev.slava7777.buyer.registry.BuyerRegistry;
 import dev.slava7777.buyer.util.EconomyUtil;
 import dev.slava7777.buyer.util.InvUtil;
+import it.unimi.dsi.fastutil.ints.IntArraySet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import org.bukkit.Material;
 import org.bukkit.Tag;
 import org.bukkit.block.ShulkerBox;
@@ -42,6 +47,8 @@ public class HomeMenu extends AbstractMenu {
 
     private static Command<ExecuteContext> COMMANDS;
 
+    private static final SimpleSlotContent EMPTY = new SimpleSlotContent(ItemModel.AIR);
+
     private final HomeMenuConfig cfg;
 
     private final BuyerUser user;
@@ -52,11 +59,21 @@ public class HomeMenu extends AbstractMenu {
     private boolean needsUpdate = true;
     private long lastUpdateTime = 0;
 
+    private final IntSet putableSlots = new IntArraySet();
+    private final SlotContent[] playerItems;
+
     public HomeMenu(HomeMenuConfig config, Player viewer, Menu prevMenu) {
         super(config, viewer, prevMenu);
         this.cfg = config;
         this.user = DBuyer.plugin().userDao.getOrCreate(viewer.getUniqueId().toString());
         this.itemRegistry = DBuyer.plugin().registries.buyerItems;
+
+        this.playerItems = layers.getMatrix(3);
+
+        for (final int slot : cfg.slots) {
+            putableSlots.add(slot);
+            playerItems[slot] = EMPTY;
+        }
 
         addPlaceholderResolver(PLACEHOLDERS.bindCtx(this));
     }
@@ -86,11 +103,6 @@ public class HomeMenu extends AbstractMenu {
     @Override
     protected void generate() {
 
-    }
-
-    @Override
-    public void syncItems() {
-        inventoryLike.syncNoDelete();
     }
 
     private void sellItems() {
@@ -229,13 +241,7 @@ public class HomeMenu extends AbstractMenu {
 
     @Override
     public void onClick(InventoryClickEvent e) {
-        if (e.getClickedInventory() != null && e.getClickedInventory() != e.getView().getTopInventory()) {
-            e.setCancelled(false);
-            markDirty();
-            return;
-        }
-
-        if (isPutSlot(e.getSlot())) {
+        if (e.getClickedInventory() != getInventory() || putableSlots.contains(e.getSlot())) {
             e.setCancelled(false);
             markDirty();
             return;
@@ -245,8 +251,10 @@ public class HomeMenu extends AbstractMenu {
 
     @Override
     public void onClick(InventoryDragEvent e) {
-        if (e.getNewItems().keySet().stream().allMatch(this::isPutSlot)) {
+        int size = getInventory().getSize();
+        if (e.getRawSlots().stream().allMatch(i -> i >= size || putableSlots.contains(i.intValue()))) {
             e.setCancelled(false);
+            markDirty();
             return;
         }
         super.onClick(e);
@@ -256,10 +264,6 @@ public class HomeMenu extends AbstractMenu {
     public void onClose(InventoryCloseEvent event) {
         returnItems();
         super.onClose(event);
-    }
-
-    private boolean isPutSlot(int slot) {
-        return Arrays.stream(cfg.slots).anyMatch(s -> s == slot);
     }
 
     static void bootCommands(Command<ExecuteContext> base) {
