@@ -66,7 +66,6 @@ public class InvUtil {
                 to.setItem(entry.getIntKey(), item.asQuantity(entry.getIntValue()));
             }
         }
-        BCore.getItemStackSerializer().
         return true;
     }
 
