@@ -1,2 +1,0 @@
-DBuyer менюшки находятся "/plugins/BMenu/menu/dbuyer/"
-Чтобы перезагрузить меню - /bm reload или /dbuyer reload, то перезагрузиться весь скупщик.
