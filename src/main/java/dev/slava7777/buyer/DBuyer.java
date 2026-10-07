@@ -14,8 +14,8 @@ import dev.slava7777.buyer.db.BuyerUserDao;
 import dev.slava7777.buyer.db.DataBase;
 import dev.slava7777.buyer.eco.VaultHook;
 import dev.slava7777.buyer.listener.JoinQuitListener;
-import dev.slava7777.buyer.menu.HomeMenu;
 import dev.slava7777.buyer.menu.MenuBooter;
+import dev.slava7777.buyer.menu.cache.ModelCache;
 import dev.slava7777.buyer.registry.BuyerRegistries;
 import dev.slava7777.buyer.util.lib.LibrariesUtil;
 import org.bukkit.command.CommandSender;
@@ -80,24 +80,27 @@ public final class DBuyer extends JavaPlugin {
 
         registries.writeLock();
 
-        dataBase = new DataBase(config.dbConfig);
+        dataBase = new DataBase(config.dbConfig());
         userDao = new BuyerUserDao(dataBase.getDataSource());
 
         scheduler = new AutoBuyScheduler(userDao);
         scheduler.start();
+
         getServer().getPluginManager().registerEvents(new JoinQuitListener(), this);
 
         cmdWrapper = new CommandWrapper(createCommand(), this);
-        cmdWrapper.setAliases(config.commands.aliases);
+        cmdWrapper.setAliases(config.commands().aliases());
         cmdWrapper.register();
 
     }
 
     @Override
     public void onDisable() {
-        cmdWrapper.close();
-        scheduler.stop();
-        userDao.close();
+        if (cmdWrapper != null) cmdWrapper.close();
+        if (scheduler != null) scheduler.stop();
+        if (userDao != null) userDao.close();
+        if (registries != null) registries.reset();
+        ModelCache.invalidate();
         BMenu.menuLoader().unregisterSubLoader(this);
         plugin = null;
     }
@@ -107,28 +110,35 @@ public final class DBuyer extends JavaPlugin {
     }
 
     public static void sendMessage(String key, Player player, PlaceholderResolver<EventContext> c) {
-        plugin().config.eventCtx.call(key, plugin().config.eventCtx.newContext().source(player).placeholders(c).build());
+        plugin().config.eventCtx().call(key, plugin().config.eventCtx().newContext().source(player).placeholders(c).build());
     }
 
     public static void sendMessage(String key, Player player) {
-        plugin().config.eventCtx.call(key, player);
+        plugin().config.eventCtx().call(key, player);
     }
 
     private Command<CommandSender> createCommand() {
-        final var cmdConf = config.commands;
+        final var cmdConf = config.commands();
         return new Command<CommandSender>(cmdConf.rename("buyer"))
-                .executor((s, args) -> open(s, cmdConf.buyer_menu))
+                .executor((s) -> open(s, cmdConf.buyer_menu()))
                 .sub(new Command<CommandSender>(cmdConf.rename("settings"))
-                        .executor((s, args) -> open(s, cmdConf.setting_menu))
+                        .executor((s) -> open(s, cmdConf.setting_menu()))
+                )
+                .sub(new Command<CommandSender>("reload")
+                        .requires(req -> req.hasPermission("dbuyer.reload"))
+                        .executor((s) -> {
+                            long ms = System.currentTimeMillis();
+                            onDisable();
+                            onLoad();
+                            onEnable();
+                            s.sendMessage("DBuyer reloaded " + (System.currentTimeMillis() - ms) + "ms");
+                        })
                 );
     }
 
     private void open(CommandSender sender, String menuId) {
         if (sender instanceof Player player) {
-            var menu = BMenu.menuLoader().create(menuId, player, null);
-            if (menu instanceof HomeMenu) {
-                menu.open();
-            }
+            BMenu.menuLoader().create(menuId, player, null).open();
         }
     }
 

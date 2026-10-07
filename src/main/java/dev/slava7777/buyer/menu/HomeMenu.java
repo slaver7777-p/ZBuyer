@@ -34,15 +34,13 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.BlockStateMeta;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-
 public class HomeMenu extends AbstractMenu {
 
     private static final PlaceholderResolver<HomeMenu> PLACEHOLDERS = Placeholders.<HomeMenu>create()
-            .withContext("money_price", m -> EconomyUtil.df.format(m.currentSellMoney))
-            .withContext("points_price", m -> EconomyUtil.df.format(m.currentSellPoints))
-            .withContext("multiplier", m -> EconomyUtil.df.format(m.user.getMultiplier()))
-            .withContext("user_points", m -> EconomyUtil.df.format(m.user.getPoints()))
+            .withContext("money_price", m -> EconomyUtil.format(m.currentSellMoney))
+            .withContext("points_price", m -> EconomyUtil.format(m.currentSellPoints))
+            .withContext("multiplier", m -> EconomyUtil.format(m.user.getMultiplier()))
+            .withContext("user_points", m -> EconomyUtil.format(m.user.getPoints()))
             ;
 
     private static Command<ExecuteContext> COMMANDS;
@@ -114,6 +112,8 @@ public class HomeMenu extends AbstractMenu {
         int clearCount = 0;
         final Inventory inv = getInventory();
 
+        final float mul = user.getMultiplier();
+
         for (final int slot : cfg.slots) {
             final ItemStack item = inv.getItem(slot);
             if (item == null || item.getType() == Material.AIR) continue;
@@ -130,7 +130,7 @@ public class HomeMenu extends AbstractMenu {
                     if (InvUtil.hasPDC(sub)) continue;
                     final BuyerItem bi = findBuyerItem(sub.getType());
                     if (bi != null) {
-                        totalMoney += bi.money * sub.getAmount() * user.getMultiplier();
+                        totalMoney += bi.money * sub.getAmount() * mul;
                         totalPoints += bi.points * sub.getAmount();
                         shulkerInv.setItem(i, null);
                         changed = true;
@@ -151,7 +151,7 @@ public class HomeMenu extends AbstractMenu {
             if (InvUtil.hasPDC(item)) continue;
             final BuyerItem bi = findBuyerItem(item.getType());
             if (bi != null) {
-                totalMoney += bi.money * item.getAmount() * user.getMultiplier();
+                totalMoney += bi.money * item.getAmount() * mul;
                 totalPoints += bi.points * item.getAmount();
                 slotsToClear[clearCount++] = slot;
                 soldCount += item.getAmount();
@@ -168,9 +168,9 @@ public class HomeMenu extends AbstractMenu {
             DBuyer.plugin().userDao.save(user);
 
             DBuyer.sendMessage("sell_items", viewer, PlaceholderResolver.<EventContext>of("count", soldCount)
-                    .append("total_money", EconomyUtil.df.format(totalMoney))
-                    .append("total_points", EconomyUtil.df.format(totalPoints))
-                    .append("multiplier", EconomyUtil.df.format(user.getMultiplier()))
+                    .append("total_money", EconomyUtil.format(totalMoney))
+                    .append("total_points", EconomyUtil.format(totalPoints))
+                    .append("multiplier", EconomyUtil.format(user.getMultiplier()))
             );
         } else {
             DBuyer.sendMessage("no_items", viewer);
@@ -182,6 +182,7 @@ public class HomeMenu extends AbstractMenu {
     private void updateSellTotal() {
         double money = 0;
         double points = 0;
+        final float mul = user.getMultiplier();
         for (int slot : cfg.slots) {
             final ItemStack item = getInventory().getItem(slot);
             if (item == null || item.getType() == Material.AIR) continue;
@@ -193,7 +194,7 @@ public class HomeMenu extends AbstractMenu {
                     if (InvUtil.hasPDC(sub)) continue;
                     final BuyerItem bi = findBuyerItem(sub.getType());
                     if (bi != null) {
-                        money += bi.money * sub.getAmount() * user.getMultiplier();
+                        money += bi.money * sub.getAmount() * mul;
                         points += bi.points * sub.getAmount();
                     }
                 }
@@ -202,7 +203,7 @@ public class HomeMenu extends AbstractMenu {
             if (InvUtil.hasPDC(item)) continue;
             final BuyerItem bi = findBuyerItem(item.getType());
             if (bi != null) {
-                money += bi.money * item.getAmount() * user.getMultiplier();
+                money += bi.money * item.getAmount() * mul;
                 points += bi.points * item.getAmount();
             }
         }

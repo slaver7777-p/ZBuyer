@@ -43,7 +43,8 @@ items:
         - "[sell_items]"
 
   setting_item:
-    material: "honeycomb"
+    material: "orange_bundle"
+    all_flags: true
     name: " <gradient:#F09802:#D34905>🔔 Настройки скупщика</gradient>"
     slot: "53"
     lore:

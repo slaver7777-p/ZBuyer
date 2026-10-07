@@ -1,6 +1,8 @@
 package dev.slava7777.buyer.util;
 
+import dev.by1337.core.BCore;
 import it.unimi.dsi.fastutil.ints.Int2IntArrayMap;
+import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
@@ -12,12 +14,14 @@ import java.util.Collection;
 public class InvUtil {
 
     public static boolean giveOrDrop(Player player, ItemStack... items) {
+        if (items.length == 0) return false;
         final Collection<ItemStack> leftover = !canGiveItems(player) ? Arrays.asList(items) : player.getInventory().addItem(items).values();
         for (final ItemStack value : leftover) {
             player.getWorld().dropItemNaturally(player.getLocation(), value);
         }
         return leftover.isEmpty();
     }
+
     public static boolean canGiveItems(Player player){
         return !player.isDead() && player.isOnline();
     }
@@ -54,14 +58,15 @@ public class InvUtil {
         }
         if (dryRun) return count == 0;
         if (count != 0) return false;
-        map.int2IntEntrySet().forEach(entry -> {
+        for (Int2IntMap.Entry entry : map.int2IntEntrySet()) {
             var i = to.getItem(entry.getIntKey());
             if (i != null) {
                 i.setAmount(entry.getIntValue());
             } else {
                 to.setItem(entry.getIntKey(), item.asQuantity(entry.getIntValue()));
             }
-        });
+        }
+        BCore.getItemStackSerializer().
         return true;
     }
 

@@ -20,6 +20,7 @@ import dev.slava7777.buyer.buyer.auto.BuyerStatus;
 import dev.slava7777.buyer.buyer.category.Category;
 import dev.slava7777.buyer.buyer.sort.Sorting;
 import dev.slava7777.buyer.db.BuyerUser;
+import dev.slava7777.buyer.menu.cache.ModelCache;
 import dev.slava7777.buyer.registry.BuyerRegistries;
 import dev.slava7777.buyer.registry.BuyerRegistry;
 import dev.slava7777.buyer.util.CyclicListIterator;
@@ -31,7 +32,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Consumer;
 
 public class SettingsMenu extends AbstractMenu {
 
@@ -130,6 +130,7 @@ public class SettingsMenu extends AbstractMenu {
     public void tick() {
         super.tick();
         if (++tickCounter % cfg.tick_update == 0) {
+            final float mul = user.getMultiplier();
             for (final int slot : cfg.slots) {
                 final SlotContent content = findItemInSlot(slot);
                 if (content == null) continue;
@@ -138,17 +139,18 @@ public class SettingsMenu extends AbstractMenu {
                 if (!item.isGrouped()) continue;
 
                 int idx = materialIndex.getOrDefault(slot, 0);
-                idx = (idx + 1) % item.materials.size();
+                idx = (idx + 1) % item.materialsArray.length;
                 materialIndex.put(slot, idx);
 
-                final ItemModel model = ItemModel.ofMaterial(item.materials.get(idx));
+                final ItemModel model = ModelCache.getOrCache(item.materialsArray[idx]);
 
-                final boolean enabled = user.hasAutoBuyItem(String.valueOf(item.id));
+                final boolean enabled = user.hasAutoBuyItem(item.id);
 
-                final SlotContent newSlot = cfg.itemDisplay.build(model, PlaceholderResolver.of("price", EconomyUtil.df.format(item.money))
-                        .append("points", EconomyUtil.df.format(item.points))
-                        .append("total_price", EconomyUtil.df.format(user.getMultiplier() * item.money))
+                final SlotContent newSlot = cfg.itemDisplay.build(model, PlaceholderResolver.of("price", item.cachedMoney)
+                        .append("points", item.cachedPoints)
+                        .append("total_price", EconomyUtil.format(mul * item.money))
                         .append("status", enabled ? "<lang:dbuyer.autobuy.enable.status>" : "<lang:dbuyer.autobuy.disable.status>")
+                        .append("autobuy_enable", enabled)
                         .bindCtx(this));
                 newSlot.setPayload(item);
                 setItem(newSlot, slot);
@@ -157,23 +159,20 @@ public class SettingsMenu extends AbstractMenu {
     }
 
     @Override
-    public void refresh() {
-        super.refresh();
-    }
-
-    @Override
     protected void generate() {
         final int start = currentPage * itemsPerPage;
+        final float mul = user.getMultiplier();
         for (int i = 0; i < itemsPerPage && start + i < currentItems.size(); i++) {
             final BuyerItem item = currentItems.get(start + i);
-            final ItemModel model = ItemModel.ofMaterial(item.materials.getFirst());
+            final ItemModel model = ModelCache.getOrCache(item.materialsArray[0]);
 
-            final boolean enabled = user.hasAutoBuyItem(String.valueOf(item.id));
+            final boolean enabled = user.hasAutoBuyItem(item.id);
 
-            final SlotContent slot = cfg.itemDisplay.build(model, PlaceholderResolver.of("price", EconomyUtil.df.format(item.money))
-                    .append("points", EconomyUtil.df.format(item.points))
-                    .append("total_price", EconomyUtil.df.format(user.getMultiplier() * item.money))
+            final SlotContent slot = cfg.itemDisplay.build(model, PlaceholderResolver.of("price", item.cachedMoney)
+                    .append("points", item.cachedPoints)
+                    .append("total_price", EconomyUtil.format(mul * item.money))
                     .append("status", enabled ? "<lang:dbuyer.autobuy.enable.status>" : "<lang:dbuyer.autobuy.disable.status>")
+                    .append("autobuy_enable", enabled)
                     .bindCtx(this));
             slot.setPayload(item);
             setItem(slot, cfg.slots[i]);
@@ -182,6 +181,11 @@ public class SettingsMenu extends AbstractMenu {
                 materialIndex.put(cfg.slots[i], 0);
             }
         }
+    }
+
+    @Override
+    public void refresh() {
+        super.refresh();
     }
 
     private void updateItems() {
@@ -202,7 +206,7 @@ public class SettingsMenu extends AbstractMenu {
         final String catId = category.getId();
         for (final BuyerItem item : itemRegistry.values()) {
             if (item.category.equals(catId)) {
-                user.enableAutoBuyItem(String.valueOf(item.id));
+                user.enableAutoBuyItem(item.id);
             }
         }
         DBuyer.plugin().userDao.save(user);
@@ -213,7 +217,7 @@ public class SettingsMenu extends AbstractMenu {
         final String catId = category.getId();
         for (BuyerItem item : itemRegistry.values()) {
             if (item.category.equals(catId)) {
-                user.disableAutoBuyItem(String.valueOf(item.id));
+                user.disableAutoBuyItem(item.id);
             }
         }
         DBuyer.plugin().userDao.save(user);
@@ -288,9 +292,9 @@ public class SettingsMenu extends AbstractMenu {
                         .alias("[TOGGLE_AUTOBUY]")
                         .executor(ctx -> {
                             if (ctx.menu instanceof SettingsMenu s) {
-                                Object payload = s.lastClickedItemPayload();
+                                final Object payload = s.lastClickedItemPayload();
                                 if (payload instanceof BuyerItem item) {
-                                    s.user.toggleAutoBuyItem(String.valueOf(item.id));
+                                    s.user.toggleAutoBuyItem(item.id);
                                     DBuyer.plugin().userDao.save(s.user);
                                     s.refresh();
                                 }

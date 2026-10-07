@@ -12,6 +12,7 @@ items:
   decorate:
     material: "yellow_stained_glass_pane"
     name: "&f "
+    hide_tooltip: true
     slot: "46-48, 50-52"
 
   info:
@@ -43,7 +44,8 @@ items:
         - "[sell_items]"
 
   setting_item:
-    material: "honeycomb"
+    material: "orange_bundle"
+    all_flags: true
     name: " <gradient:#F09802:#D34905>🔔 Настройки скупщика</gradient>"
     slot: "53"
     lore:

@@ -1,7 +1,6 @@
 package dev.slava7777.buyer.buyer.category;
 
 import dev.by1337.yaml.decoder.PipelineYamlDecoder;
-import dev.by1337.yaml.decoder.RecordYamlDecoder;
 import dev.by1337.yaml.decoder.YamlDecoder;
 
 public class Category {

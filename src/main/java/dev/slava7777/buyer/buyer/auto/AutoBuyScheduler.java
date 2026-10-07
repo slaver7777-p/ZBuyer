@@ -32,24 +32,28 @@ public class AutoBuyScheduler extends BukkitRunnable {
             if (!user.isAutoBuyEnabled()) continue;
 
             final Set<BuyerItem> autoItems = new HashSet<>();
-            for (final String id : user.getAutoBuyItemIds()) {
-                final BuyerItem item = DBuyer.plugin().registries.buyerItems.getByName(id);
+            for (final int id : user.getAutoBuyItemIds()) {
+                final BuyerItem item = DBuyer.plugin().registries.buyerItems.getByName(String.valueOf(id));
                 if (item != null) autoItems.add(item);
             }
             if (autoItems.isEmpty()) continue;
+
+            final ItemStack[] contents = player.getInventory().getContents();
+            if (contents.length == 0) continue;
 
             double totalMoney = 0;
             double totalPoints = 0;
             int soldCount = 0;
 
-            for (final ItemStack stack : player.getInventory().getContents()) {
+            final float mul = user.getMultiplier();
+            for (final ItemStack stack : contents) {
                 if (stack == null || stack.getType().isAir()) continue;
                 if (InvUtil.hasPDC(stack)) continue;
 
                 for (final BuyerItem bi : autoItems) {
                     if (bi.matches(stack.getType())) {
                         final int amount = stack.getAmount();
-                        totalMoney += bi.money * amount * user.getMultiplier();
+                        totalMoney += bi.money * amount * mul;
                         totalPoints += bi.points * amount;
                         soldCount += amount;
                         stack.setAmount(0);
@@ -65,9 +69,9 @@ public class AutoBuyScheduler extends BukkitRunnable {
 
                 DBuyer.sendMessage("auto_sold", player,
                         PlaceholderResolver.<EventContext>of("count", soldCount)
-                                .append("total_money", EconomyUtil.df.format(totalMoney))
-                                .append("total_points", EconomyUtil.df.format(totalPoints))
-                                .append("multiplier", EconomyUtil.df.format(user.getMultiplier()))
+                                .append("total_money", EconomyUtil.format(totalMoney))
+                                .append("total_points", EconomyUtil.format(totalPoints))
+                                .append("multiplier", EconomyUtil.format(user.getMultiplier()))
                 );
             }
         }

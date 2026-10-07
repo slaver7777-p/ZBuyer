@@ -16,7 +16,8 @@ import org.bukkit.plugin.Plugin;
 import java.util.List;
 import java.util.Map;
 
-public class Config {
+public record Config(MessageManager eventCtx, Categories categories, List<String> sorting, DbConfig dbConfig,
+                     List<BuyerItem> buyerItems, CommandsConf commands, BuyerMultiplier buyerMultiplier) {
 
     public static final YamlDecoder<Config> DECODER = RecordYamlDecoder.mapOf(
             Config::new,
@@ -24,6 +25,7 @@ public class Config {
             readFile("categories.yml").and(Categories.DECODER).fieldOf(null, new Categories(Map.of())),
             YamlDecoder.STRING.listOf().fieldOf("sorting"),
             readFile("database.yml").and(DbConfig.DECODER).fieldOf(),
+            //readFile("buyer_items.yml").and(BuyerItem.DECODER.listOf()).fieldOf("buyer_items"), //Какого-то хуя не работает
             readFile("buyer_items.yml").map(map ->
                     map.get("buyer_items").decode(BuyerItem.CODEC.listOf()).getOrThrow()
             ).fieldOf(),
@@ -31,28 +33,11 @@ public class Config {
             BuyerMultiplier.DECODER.fieldOf("multiplier")
     );
 
-    public final MessageManager eventCtx;
-    public final Categories categories;
-    public final List<String> sorting;
-    public final DbConfig dbConfig;
-    public final List<BuyerItem> buyerItems;
-    public final CommandsConf commands;
-    public final BuyerMultiplier buyerMultiplier;
-
-    public Config(MessageManager eventCtx, Categories categories, List<String> sorting, DbConfig dbConfig, List<BuyerItem> buyerItems, CommandsConf commands, BuyerMultiplier buyerMultiplier) {
-        this.eventCtx = eventCtx;
-        this.categories = categories;
-        this.sorting = sorting;
-        this.dbConfig = dbConfig;
-        this.buyerItems = buyerItems;
-        this.commands = commands;
-        this.buyerMultiplier = buyerMultiplier;
-    }
-
     public void boot(BuyerRegistries registries) {
         categories.boot(registries);
         SortingBoot.boot(registries.sorting, sorting);
         for (final BuyerItem bi : buyerItems) {
+            bi.bake();
             registries.buyerItems.register(String.valueOf(bi.id()), bi);
         }
         BuyerStatus.boot(registries);

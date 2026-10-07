@@ -3,9 +3,8 @@ package dev.slava7777.buyer.db;
 import dev.slava7777.buyer.DBuyer;
 import dev.slava7777.buyer.buyer.BuyerMultiplier;
 import dev.slava7777.buyer.buyer.auto.BuyerStatus;
-
-import java.util.HashSet;
-import java.util.Set;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 
 public class BuyerUser {
     private String uuid;
@@ -15,11 +14,11 @@ public class BuyerUser {
     private float multiplier;
     private boolean customMultiplier = false;
     private BuyerStatus buyerStatus = BuyerStatus.DISABLED;
-    private final Set<String> autoBuyItemIds = new HashSet<>();
+    private final IntSet autoBuyItemIds = new IntOpenHashSet(128, 0.75f);
 
     public BuyerUser(String uuid) {
         this.uuid = uuid;
-        this.buyerMultiplier = DBuyer.plugin().config.buyerMultiplier;
+        this.buyerMultiplier = DBuyer.plugin().config.buyerMultiplier();
         this.multiplier = 1.0f;
     }
 
@@ -56,6 +55,7 @@ public class BuyerUser {
         this.totalPoints += amount;
         this.multiplier = buyerMultiplier.calculate(totalPoints);
     }
+
     public float getMultiplier() {
         if (customMultiplier) {
             return multiplier;
@@ -85,7 +85,7 @@ public class BuyerUser {
         return buyerStatus.isActive();
     }
 
-    public Set<String> getAutoBuyItemIds() {
+    public IntSet getAutoBuyItemIds() {
         return autoBuyItemIds;
     }
 
@@ -97,23 +97,23 @@ public class BuyerUser {
         this.customMultiplier = customMultiplier;
     }
 
-    public void toggleAutoBuyItem(String itemId) {
-        if (autoBuyItemIds.contains(itemId)) {
-            autoBuyItemIds.remove(itemId);
+    public void toggleAutoBuyItem(int id) {
+        if (autoBuyItemIds.contains(id)) {
+            autoBuyItemIds.remove(id);
         } else {
-            autoBuyItemIds.add(itemId);
+            autoBuyItemIds.add(id);
         }
     }
 
-    public void enableAutoBuyItem(String itemId) {
-        autoBuyItemIds.add(itemId);
+    public void enableAutoBuyItem(int id) {
+        autoBuyItemIds.add(id);
     }
 
-    public void disableAutoBuyItem(String itemId) {
-        autoBuyItemIds.remove(itemId);
+    public void disableAutoBuyItem(int id) {
+        autoBuyItemIds.remove(id);
     }
 
-    public boolean hasAutoBuyItem(String itemId) {
-        return autoBuyItemIds.contains(itemId);
+    public boolean hasAutoBuyItem(int id) {
+        return autoBuyItemIds.contains(id);
     }
 }

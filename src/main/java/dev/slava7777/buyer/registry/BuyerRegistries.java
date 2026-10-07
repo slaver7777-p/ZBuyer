@@ -18,4 +18,11 @@ public class BuyerRegistries {
         buyerItems.writeLock();
         buyerStatuses.writeLock();
     }
+
+    public void reset() {
+        sorting.reset();
+        categories.reset();
+        buyerItems.reset();
+        buyerStatuses.reset();
+    }
 }

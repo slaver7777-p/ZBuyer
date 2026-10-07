@@ -13,8 +13,8 @@ import org.slf4j.LoggerFactory;
 
 import javax.sql.DataSource;
 import java.sql.*;
-import java.util.LinkedList;
 import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
 
 public class BuyerUserDao {
@@ -22,7 +22,7 @@ public class BuyerUserDao {
     private final DataSource dataSource;
     private final Cache<String, BuyerUser> cache;
     private final Gson gson = new GsonBuilder().create();
-    private final Queue<Operation> operations = new LinkedList<>();
+    private final Queue<Operation> operations = new ConcurrentLinkedQueue<>();
     private final BukkitTask flushTask;
 
     public BuyerUserDao(DataSource dataSource) {
@@ -73,9 +73,9 @@ public class BuyerUserDao {
                 user.setBuyerStatus(BuyerStatus.valueOf(rs.getString("auto_buy_mode")));
                 final String itemsJson = rs.getString("auto_buy_items");
                 if (itemsJson != null && !itemsJson.isEmpty()) {
-                    final String[] items = gson.fromJson(itemsJson, String[].class);
-                    for (final String itemId : items) {
-                        user.getAutoBuyItemIds().add(itemId);
+                    final int[] items = gson.fromJson(itemsJson, int[].class);
+                    for (int id : items) {
+                        user.getAutoBuyItemIds().add(id);
                     }
                 }
             } else {
@@ -108,7 +108,7 @@ public class BuyerUserDao {
             ps.setFloat(4, user.getMultiplier());
             ps.setBoolean(5, user.isCustomMultiplier());
             ps.setString(6, user.getBuyerStatus().name());
-            final String itemsJson = gson.toJson(user.getAutoBuyItemIds().toArray(new String[0]));
+            final String itemsJson = gson.toJson(user.getAutoBuyItemIds().toArray(new Integer[0]));
             ps.setString(7, itemsJson);
             ps.executeUpdate();
         } catch (SQLException e) {
